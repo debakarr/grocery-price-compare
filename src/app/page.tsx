@@ -387,8 +387,8 @@ export default function Home() {
             </p>
             <p className="text-sm text-slate-300">
               {mode === 'quick'
-                ? 'JioMart Quick · Flipkart Minutes · Spencer\'s Jiffy · Vishal Mega Mart'
-                : 'Amazon.in'
+                ? 'JioMart Quick · Flipkart Minutes · Spencer\'s Jiffy'
+                : 'JioMart · Flipkart · Amazon · Vishal Mega Mart'
               }
             </p>
           </div>

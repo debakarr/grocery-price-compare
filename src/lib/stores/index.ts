@@ -1,20 +1,22 @@
 import { getCached, setCache } from '@/lib/cache'
 import { DeliveryMode, MatchedProduct, ProductResult, SearchResponse, StoreName } from './types'
-import { searchJioMart } from './jiomart'
+import { searchJioMartQuick, searchJioMartNormal } from './jiomart'
 import { searchVishalMegaMart } from './vishalmegamart'
 import { searchSpencers } from './spencers'
-import { searchFlipkart } from './flipkart'
+import { searchFlipkartQuick, searchFlipkartNormal } from './flipkart'
 import { searchAmazon } from './amazon'
 
 const STORE_GROUPS: Record<DeliveryMode, { id: StoreName; name: string; search: (q: string, p: string) => Promise<ProductResult[]> }[]> = {
   quick: [
-    { id: 'jiomart', name: 'JioMart', search: searchJioMart },
-    { id: 'flipkart', name: 'Flipkart', search: searchFlipkart },
+    { id: 'jiomart', name: 'JioMart Quick', search: searchJioMartQuick },
+    { id: 'flipkart', name: 'Flipkart Minutes', search: searchFlipkartQuick },
     { id: 'spencers', name: "Spencer's", search: searchSpencers },
-    { id: 'vishalmegamart', name: 'Vishal Mega Mart', search: searchVishalMegaMart },
   ],
   normal: [
+    { id: 'jiomart', name: 'JioMart', search: searchJioMartNormal },
+    { id: 'flipkart', name: 'Flipkart', search: searchFlipkartNormal },
     { id: 'amazon', name: 'Amazon', search: searchAmazon },
+    { id: 'vishalmegamart', name: 'Vishal Mega Mart', search: searchVishalMegaMart },
   ],
 }
 

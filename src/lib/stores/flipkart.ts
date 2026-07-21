@@ -42,15 +42,16 @@ async function getPage() {
   })).newPage()
 }
 
-export async function searchFlipkart(query: string, _pincode: string): Promise<ProductResult[]> {
+async function flipkartSearch(query: string, marketplace: string): Promise<ProductResult[]> {
   if (IS_VERCEL) throw new Error('Playwright not available on Vercel')
   const page = await getPage()
 
   try {
     await page.goto('https://www.flipkart.com/', { waitUntil: 'domcontentloaded', timeout: 15000 })
-    await page.goto(`https://www.flipkart.com/search?q=${encodeURIComponent(query)}&marketplace=HYPERLOCAL`, {
-      waitUntil: 'networkidle', timeout: 30000,
-    })
+    const url = marketplace
+      ? `https://www.flipkart.com/search?q=${encodeURIComponent(query)}&marketplace=${marketplace}`
+      : `https://www.flipkart.com/search?q=${encodeURIComponent(query)}`
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
     await page.waitForSelector('a[href*="/p/"]', { timeout: 20000 }).catch(() => {})
 
     const products = await page.evaluate(() => {
@@ -90,4 +91,12 @@ export async function searchFlipkart(query: string, _pincode: string): Promise<P
   } finally {
     if (!isCDP) await page.context().close()
   }
+}
+
+export function searchFlipkartQuick(query: string, pincode: string): Promise<ProductResult[]> {
+  return flipkartSearch(query, 'HYPERLOCAL')
+}
+
+export function searchFlipkartNormal(query: string, pincode: string): Promise<ProductResult[]> {
+  return flipkartSearch(query, '')
 }

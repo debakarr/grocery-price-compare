@@ -18,10 +18,20 @@ function getStoreIds(pincode: string): string {
   return storeMap[pincode] || '218302||3882||14355||3682||3195'
 }
 
-export async function searchJioMart(query: string, pincode: string): Promise<ProductResult[]> {
+export async function searchJioMartQuick(query: string, pincode: string): Promise<ProductResult[]> {
   const storeIds = getStoreIds(pincode)
   const f = encodeURIComponent(`journey:quickcommerce:::store_ids:${storeIds}::searchType:global`)
   const url = `https://www.jiomart.com/ext/vertex/application/api/v1.0/products?q=${encodeURIComponent(query)}&f=${f}&page_size=20&page_id=*`
+
+  return jioMartFetch(url, pincode)
+}
+
+export async function searchJioMartNormal(query: string, pincode: string): Promise<ProductResult[]> {
+  const url = `https://www.jiomart.com/ext/vertex/application/api/v1.0/products?q=${encodeURIComponent(query)}&page_size=20&page_id=*`
+  return jioMartFetch(url, pincode)
+}
+
+async function jioMartFetch(url: string, pincode: string): Promise<ProductResult[]> {
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 15000)
