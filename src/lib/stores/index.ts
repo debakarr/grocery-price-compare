@@ -1,16 +1,22 @@
 import { getCached, setCache } from '@/lib/cache'
-import { MatchedProduct, ProductResult, SearchResponse, StoreName } from './types'
+import { DeliveryMode, MatchedProduct, ProductResult, SearchResponse, StoreName } from './types'
 import { searchJioMart } from './jiomart'
 import { searchVishalMegaMart } from './vishalmegamart'
 import { searchSpencers } from './spencers'
 import { searchFlipkart } from './flipkart'
+import { searchAmazon } from './amazon'
 
-const STORES: { id: StoreName; name: string; search: (q: string, p: string) => Promise<ProductResult[]> }[] = [
-  { id: 'jiomart', name: 'JioMart', search: searchJioMart },
-  { id: 'vishalmegamart', name: 'Vishal Mega Mart', search: searchVishalMegaMart },
-  { id: 'spencers', name: "Spencer's", search: searchSpencers },
-  { id: 'flipkart', name: 'Flipkart', search: searchFlipkart },
-]
+const STORE_GROUPS: Record<DeliveryMode, { id: StoreName; name: string; search: (q: string, p: string) => Promise<ProductResult[]> }[]> = {
+  quick: [
+    { id: 'jiomart', name: 'JioMart', search: searchJioMart },
+    { id: 'flipkart', name: 'Flipkart', search: searchFlipkart },
+    { id: 'spencers', name: "Spencer's", search: searchSpencers },
+    { id: 'vishalmegamart', name: 'Vishal Mega Mart', search: searchVishalMegaMart },
+  ],
+  normal: [
+    { id: 'amazon', name: 'Amazon', search: searchAmazon },
+  ],
+}
 
 function stripSize(name: string): string {
   return name
@@ -36,34 +42,34 @@ function computeRelevance(name: string, query: string): number {
   const lower = name.toLowerCase()
   const q = query.toLowerCase().trim()
   const qWords = q.split(/\s+/)
-
   if (qWords.some(w => new RegExp(`\\b${w}\\b`).test(lower))) return 0
   if (qWords.some(w => lower.includes(w))) return 1
   return 2
 }
 
-export async function searchAllStores(query: string, pincode: string): Promise<SearchResponse> {
-  const cacheKey = `search:${query.toLowerCase().trim()}:${pincode}`
+export async function searchAllStores(query: string, pincode: string, mode: DeliveryMode = 'quick'): Promise<SearchResponse> {
+  const cacheKey = `search:${mode}:${query.toLowerCase().trim()}:${pincode}`
   const cached = getCached<SearchResponse>(cacheKey)
   if (cached) return cached
 
+  const stores = STORE_GROUPS[mode]
   const allResults: ProductResult[] = []
 
   const results = await Promise.allSettled(
-    STORES.map(async (store) => {
+    stores.map(async (store) => {
       const products = await store.search(query, pincode)
       return { id: store.id, name: store.name, products }
     })
   )
 
   const storeStatuses: SearchResponse['stores'] = []
-  for (let i = 0; i < STORES.length; i++) {
+  for (let i = 0; i < stores.length; i++) {
     const r = results[i]
     if (r.status === 'fulfilled') {
       allResults.push(...r.value.products)
       storeStatuses.push({ id: r.value.id, name: r.value.name, status: 'ok' })
     } else {
-      storeStatuses.push({ id: STORES[i].id, name: STORES[i].name, status: 'error', error: (r.reason as Error)?.message?.slice(0, 80) })
+      storeStatuses.push({ id: stores[i].id, name: stores[i].name, status: 'error', error: (r.reason as Error)?.message?.slice(0, 80) })
     }
   }
 
@@ -90,11 +96,12 @@ export async function searchAllStores(query: string, pincode: string): Promise<S
     })
   }
 
-    matched.sort((a, b) => a.relevance - b.relevance || a.minPrice - b.minPrice)
+  matched.sort((a, b) => a.relevance - b.relevance || a.minPrice - b.minPrice)
 
   const response: SearchResponse = {
     query,
     pincode,
+    mode,
     matched,
     totalProducts: allResults.length,
     stores: storeStatuses,

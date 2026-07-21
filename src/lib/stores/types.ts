@@ -1,4 +1,5 @@
-export type StoreName = 'jiomart' | 'flipkart' | 'spencers' | 'vishalmegamart'
+export type StoreName = 'jiomart' | 'flipkart' | 'spencers' | 'vishalmegamart' | 'amazon'
+export type DeliveryMode = 'quick' | 'normal'
 
 export interface ProductResult {
   name: string
@@ -29,6 +30,7 @@ export interface MatchedProduct {
 export interface SearchResponse {
   query: string
   pincode: string
+  mode: DeliveryMode
   matched: MatchedProduct[]
   totalProducts: number
   stores: { id: StoreName; name: string; status: 'ok' | 'error'; error?: string }[]
