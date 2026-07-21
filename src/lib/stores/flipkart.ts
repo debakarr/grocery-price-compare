@@ -1,6 +1,8 @@
 import { ProductResult } from './types'
 import { parseUnit, calcPricePerUnit } from './parse-unit'
 
+const IS_VERCEL = process.env.VERCEL === '1'
+
 let browser: import('playwright').Browser | null = null
 let isCDP = false
 
@@ -47,6 +49,7 @@ async function getPage() {
 }
 
 export async function searchFlipkart(query: string, _pincode: string): Promise<ProductResult[]> {
+  if (IS_VERCEL) throw new Error('Playwright not available on Vercel')
   const page = await getPage()
 
   try {
